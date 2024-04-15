@@ -1,21 +1,21 @@
 /* USER CODE BEGIN Header */
 /**
-  ******************************************************************************
-  * @file           : main.h
-  * @brief          : Header for main.c file.
-  *                   This file contains the common defines of the application.
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2024 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * @file           : main.h
+ * @brief          : Header for main.c file.
+ *                   This file contains the common defines of the application.
+ ******************************************************************************
+ * @attention
+ *
+ * Copyright (c) 2024 STMicroelectronics.
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ * If no LICENSE file comes with this software, it is provided AS-IS.
+ *
+ ******************************************************************************
+ */
 /* USER CODE END Header */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
@@ -31,7 +31,7 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -65,6 +65,18 @@ void Error_Handler(void);
 #define DRV_BIN1_GPIO_Port GPIOA
 #define DRV_BIN2_Pin GPIO_PIN_3
 #define DRV_BIN2_GPIO_Port GPIOA
+#define MH_AO_Pin GPIO_PIN_4
+#define MH_AO_GPIO_Port GPIOA
+#define MH_DO_Pin GPIO_PIN_5
+#define MH_DO_GPIO_Port GPIOA
+#define MH_VCC_Pin GPIO_PIN_6
+#define MH_VCC_GPIO_Port GPIOA
+#define MH_GND_Pin GPIO_PIN_7
+#define MH_GND_GPIO_Port GPIOA
+#define TRIG_Pin GPIO_PIN_11
+#define TRIG_GPIO_Port GPIOA
+#define ECHO_Pin GPIO_PIN_12
+#define ECHO_GPIO_Port GPIOA
 
 /* USER CODE BEGIN Private defines */
 
