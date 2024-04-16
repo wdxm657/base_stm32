@@ -12,11 +12,13 @@ extern "C" {
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
+#include "rtc.h"
 typedef struct {
     unsigned int adc_vol; // ADC测量
     float vol;            // 实际电压
 
 } RESIST;
+extern uint8_t aRxBuffer;
 
 #define DEBUG_UART_TIMEOUT 500
 // IO口定义
@@ -28,6 +30,11 @@ typedef struct {
 
 void Illumination_Test(void);
 void Distance_Test(void);
+void Illumination_Initial(void);
+void RTC_Time_Test(RTC_DateTypeDef* GetData, RTC_TimeTypeDef* GetTime);
+void Pwm_Test(void);
+void Rev_Forw_Test(void);
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef* huart);
 #ifdef __cplusplus
 }
 #endif

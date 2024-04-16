@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "adc.h"
+#include "rtc.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
@@ -57,6 +58,15 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim) {
+    if (htim->Instance == TIM2) // 判断是否为定时器2产生的中断
+    {
+        HAL_GPIO_TogglePin(MH_DO_GPIO_Port, MH_DO_Pin); // GPIOA6电平翻转
+    } else if (htim->Instance == TIM3) // 判断是否为定时器3产生的中断
+    {
+        HAL_GPIO_TogglePin(MH_DO_GPIO_Port, MH_DO_Pin); // GPIOA6电平翻转
+    }
+}
 
 /* USER CODE END 0 */
 
@@ -66,7 +76,10 @@ void SystemClock_Config(void);
  */
 int main(void) {
     /* USER CODE BEGIN 1 */
-
+    RTC_DateTypeDef GetData; // 获取日期结构体
+    RTC_TimeTypeDef GetTime; // 获取时间结构体
+    uint16_t Pwm = 0;
+    unsigned int flag = 1;
     /* USER CODE END 1 */
 
     /* MCU
@@ -91,11 +104,16 @@ int main(void) {
     MX_GPIO_Init();
     MX_USART1_UART_Init();
     MX_ADC1_Init();
+    MX_TIM3_Init();
+    MX_RTC_Init();
     MX_TIM2_Init();
     /* USER CODE BEGIN 2 */
-    HAL_ADC_Start_IT(&hadc1);      // 中断方式开启ADC
-    HAL_TIM_Base_Start_IT(&htim2); // 开启中断二
+    HAL_UART_Receive_IT(&huart1, (uint8_t*)&aRxBuffer, 1);
+    HAL_ADC_Start_IT(&hadc1);                 // 中断方式开启ADC
+    HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1); // 开启 定时器2 PWM通道1
+    HAL_TIM_Base_Start_IT(&htim3);            // 开启定时器三中断
 
+    Illumination_Initial();
     /* USER CODE END 2 */
 
     /* Infinite loop */
@@ -104,26 +122,13 @@ int main(void) {
         /* USER CODE END WHILE */
 
         /* USER CODE BEGIN 3 */
-        HAL_GPIO_WritePin(GPIOA, MH_VCC_Pin, GPIO_PIN_SET);
-        HAL_GPIO_WritePin(GPIOA, MH_GND_Pin, GPIO_PIN_RESET);
-        // AIN 1   0       0       1
-        // AIN 2   0       1       0
-        //        STOP  REVERSE FORWARD
-        // printf("A  REVERSE\r\n");
-        // HAL_GPIO_WritePin(GPIOA, DRV_AIN1_Pin, GPIO_PIN_RESET);
-        // HAL_GPIO_WritePin(GPIOA, DRV_AIN2_Pin, GPIO_PIN_SET);
-        // DO_RESET();
-        HAL_Delay(500);
-
-        Illumination_Test();
-        Distance_Test();
-        // printf("A  STOP\r\n");
-        // HAL_GPIO_WritePin(GPIOA, DRV_AIN1_Pin, GPIO_PIN_RESET);
-        // HAL_GPIO_WritePin(GPIOA, DRV_AIN2_Pin, GPIO_PIN_RESET);
-        // HAL_Delay(1000);
-        // printf("A  FORWARD\r\n");
-        // HAL_GPIO_WritePin(GPIOA, DRV_AIN1_Pin, GPIO_PIN_SET);
-        // HAL_GPIO_WritePin(GPIOA, DRV_AIN2_Pin, GPIO_PIN_RESET);
+        if (flag == 1) { printf("Hello world!\r\n"); }
+        HAL_Delay(1000);
+        // Illumination_Test();
+        // Distance_Test();
+        // RTC_Time_Test(&GetData, &GetTime);
+        // Pwm_Test();
+        // Rev_Forw_Test();
     }
     /* USER CODE END 3 */
 }
@@ -140,10 +145,12 @@ void SystemClock_Config(void) {
     /** Initializes the RCC Oscillators according to the specified parameters
      * in the RCC_OscInitTypeDef structure.
      */
-    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+    RCC_OscInitStruct.OscillatorType =
+        RCC_OSCILLATORTYPE_LSI | RCC_OSCILLATORTYPE_HSE;
     RCC_OscInitStruct.HSEState = RCC_HSE_ON;
     RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
     RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+    RCC_OscInitStruct.LSIState = RCC_LSI_ON;
     RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
     RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
     RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL9;
@@ -161,7 +168,8 @@ void SystemClock_Config(void) {
     if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK) {
         Error_Handler();
     }
-    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_ADC;
+    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RTC | RCC_PERIPHCLK_ADC;
+    PeriphClkInit.RTCClockSelection = RCC_RTCCLKSOURCE_LSI;
     PeriphClkInit.AdcClockSelection = RCC_ADCPCLK2_DIV6;
     if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK) {
         Error_Handler();
@@ -193,7 +201,7 @@ void Error_Handler(void) {
  * @param  line: assert_param error line source number
  * @retval None
  */
-void assert_failed(unsigned char* file, unsigned int line) {
+void assert_failed(uint8_t* file, uint32_t line) {
     /* USER CODE BEGIN 6 */
     /* User can add his own implementation to report the file name and line
        number, ex: printf("Wrong parameters value: file %s on line %d\r\n",
